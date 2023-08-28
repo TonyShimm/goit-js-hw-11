@@ -45,15 +45,6 @@ const loadMorePhotos = async function (entries, observer) {
         const markup = createMarkup(hits);
         refs.gallery.insertAdjacentHTML('beforeend', markup);
 
-        if (pixaby.hasMorePhotos) {
-          const lastItem = document.querySelector('.gallery a:last-child');
-          observer.observe(lastItem);
-        } else
-          Notify.info(
-            "We're sorry, but you've reached the end of search results.",
-            notifyInit
-          );
-
         modalLightboxGallery.refresh();
         scrollPage();
       } catch (error) {
@@ -91,7 +82,7 @@ const onSubmitClick = async event => {
 
   try {
     spinnerPlay();
-    const { hits, total } = await pixaby.getPhotos();
+    const { hits, totalHits } = await pixaby.getPhotos();
 
     if (hits.length === 0) {
       Notify.failure(
@@ -105,10 +96,12 @@ const onSubmitClick = async event => {
     const markup = createMarkup(hits);
     refs.gallery.insertAdjacentHTML('beforeend', markup);
 
-    pixaby.setTotal(total);
-    Notify.success(`Hooray! We found ${total} images.`, notifyInit);
+    pixaby.setTotal(totalHits);
+    Notify.success(`Hooray! We found ${totalHits} images.`, notifyInit);
 
     if (pixaby.hasMorePhotos) {
+      refs.btnLoadMore.classList.remove('is-hidden');
+
       const lastItem = document.querySelector('.gallery a:last-child');
       observer.observe(lastItem);
     }
