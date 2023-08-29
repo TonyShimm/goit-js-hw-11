@@ -30,6 +30,22 @@ const options = {
   threshold: 1.0,
 };
 
+const checkAndAttachObserver = async () => {
+  if (pixaby.hasMorePhotos()) {
+    const lastItem = document.querySelector('.gallery a:last-child');
+    if (lastItem) {
+      observer.observe(lastItem);
+    } else {
+      console.log('No more items to observe.');
+    }
+  } else {
+    Notify.info(
+      "We're sorry, but you've reached the end of search results.",
+      notifyInit
+    );
+  }
+};
+
 const loadMorePhotos = async function (entries, observer) {
   entries.forEach(async entry => {
     if (entry.isIntersecting) {
@@ -44,6 +60,8 @@ const loadMorePhotos = async function (entries, observer) {
         const { hits } = await pixaby.getPhotos();
         const markup = createMarkup(hits);
         refs.gallery.insertAdjacentHTML('beforeend', markup);
+
+        await checkAndAttachObserver();
 
         modalLightboxGallery.refresh();
         scrollPage();
@@ -76,6 +94,15 @@ const onSubmitClick = async event => {
     return;
   }
 
+  if (search_query === pixaby.query) {
+    Notify.warning(
+      `We already found images for "${search_query.toUpperCase()}.
+      Please, enter another phrase`,
+      notifyInit
+    );
+    return;
+  }
+
   pixaby.query = search_query;
 
   clearPage();
@@ -83,6 +110,8 @@ const onSubmitClick = async event => {
   try {
     spinnerPlay();
     const { hits, totalHits } = await pixaby.getPhotos();
+    // console.log("totalHits: ", totalHits);
+    // console.log('hits: ', hits);
 
     if (hits.length === 0) {
       Notify.failure(
@@ -99,12 +128,7 @@ const onSubmitClick = async event => {
     pixaby.setTotal(totalHits);
     Notify.success(`Hooray! We found ${totalHits} images.`, notifyInit);
 
-    if (pixaby.hasMorePhotos) {
-      refs.btnLoadMore.classList.remove('is-hidden');
-
-      const lastItem = document.querySelector('.gallery a:last-child');
-      observer.observe(lastItem);
-    }
+    await checkAndAttachObserver();
 
     modalLightboxGallery.refresh();
   } catch (error) {
@@ -116,27 +140,6 @@ const onSubmitClick = async event => {
   }
 };
 
-const onLoadMore = async () => {
-  pixaby.incrementPage();
-
-  if (!pixaby.hasMorePhotos) {
-    refs.btnLoadMore.classList.add('is-hidden');
-    Notify.info("We're sorry, but you've reached the end of search results.");
-    notifyInit;
-  }
-  try {
-    const { hits } = await pixaby.getPhotos();
-    const markup = createMarkup(hits);
-    refs.gallery.insertAdjacentHTML('beforeend', markup);
-
-    modalLightboxGallery.refresh();
-  } catch (error) {
-    Notify.failure(error.message, 'Something went wrong!', notifyInit);
-
-    clearPage();
-  }
-};
-
 function clearPage() {
   pixaby.resetPage();
   refs.gallery.innerHTML = '';
@@ -144,7 +147,6 @@ function clearPage() {
 }
 
 refs.form.addEventListener('submit', onSubmitClick);
-refs.btnLoadMore.addEventListener('click', onLoadMore);
 
 function scrollPage() {
   const { height: cardHeight } = document
