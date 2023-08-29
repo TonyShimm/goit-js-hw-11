@@ -1,14 +1,13 @@
 import axios from 'axios';
 
 axios.defaults.baseURL = 'https://pixabay.com/api/';
-
-const API_KEY = '39039252-6b09cc59e833579c156bb7d93';
+const API_KEY = '28194821-49041d995ecd04735d9e20d11';
 
 export class PixabayAPI {
   #page = 1;
   #per_page = 40;
   #query = '';
-  #totalPages = 0;
+  #totalPhotos = 0;
 
   async getPhotos() {
     const params = {
@@ -19,15 +18,15 @@ export class PixabayAPI {
       orientation: 'horizontal',
       safesearch: true,
     };
-
     const urlAXIOS = `?key=${API_KEY}`;
 
     const { data } = await axios.get(urlAXIOS, { params });
+
     return data;
   }
 
   get query() {
-    this.#query;
+    return this.#query;
   }
 
   set query(newQuery) {
@@ -43,10 +42,9 @@ export class PixabayAPI {
   }
 
   setTotal(total) {
-    this.#totalPages = total;
+    this.#totalPhotos = total;
   }
-
   hasMorePhotos() {
-    return this.#page < Math.ceil(this.#totalPages / this.#per_page);
+    return this.#page < Math.ceil(this.#totalPhotos / this.#per_page);
   }
 }
